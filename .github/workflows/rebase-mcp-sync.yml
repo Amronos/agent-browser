@@ -1,0 +1,27 @@
+name: Rebase MCP catalog verification
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: cli
+      - name: Regenerate MCP catalog
+        run: pnpm run mcp-tools:sync
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mcp-tools
+          path: packages/@agent-browser/sandbox/mcp-tools.json
+      - name: Verify generated catalog is current
+        run: git diff --exit-code -- packages/@agent-browser/sandbox/mcp-tools.json
